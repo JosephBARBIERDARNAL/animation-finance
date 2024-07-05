@@ -28,4 +28,4 @@ def load_yahoo_data(tickers: Union[str, List[str]]) -> pl.DataFrame:
     for df in data_frames[1:]:
         merged_df = merged_df.join(df, on="Date", how="inner")
 
-    return merged_df.sort("Date")
+    return merged_df.sort("Date").to_pandas()
