@@ -13,12 +13,12 @@ spacing(15)
 st.markdown("### Customize style and change settings")
 
 # select ticker
-ticker = st.selectbox(
-    "Ticker", options=["AAPL", "GOOGL", "MSFT"], key="ticker selection"
+ticker = st.multiselect(
+    "Ticker", options=["AAPL", "GOOGL", "MSFT"], default="AAPL", key="ticker selection"
 )
 
 
-spacing(3)
+spacing(4)
 st.markdown("##### Animation parameters")
 col1, col2 = st.columns([1, 1])
 with col1:
@@ -40,55 +40,65 @@ with col2:
         help="A higher FPS leads to a faster video.",
     )
 
-spacing(3)
+spacing(4)
 st.markdown("##### Style parameters")
-
 col1, col2 = st.columns(2)
 with col1:
     background_color = st.color_picker("Background", value="#ffffff")
 with col2:
-    line_color = st.color_picker("Line", value="#6700D4")
+    line_color = st.color_picker("Line", value="#000000")
 
 spines_to_remove = st.multiselect(
-    "Border to removes",
+    "Border to remove",
     options=["top", "right", "left", "bottom"],
     default=["top", "right"],
 )
 
-spacing(3)
+spacing(4)
 st.markdown("##### Chart parameters")
 elements_to_draw = st.multiselect(
     "Choose elements to put on the chart",
     options=["line", "final point", "area"],
-    default=["line", "final point"],
+    default=["line", "final point", "area"],
 )
-if "line" in elements_to_draw:
-    linewidth = st.slider("Linewidth", min_value=0.1, max_value=10.0, value=1.0)
-if "final point" in elements_to_draw:
-    point_size = st.slider("Point size", min_value=1, max_value=1000, value=100)
+col1, col2 = st.columns(2)
+with col1:
+    if "line" in elements_to_draw:
+        linewidth = st.slider("Linewidth", min_value=0.1, max_value=10.0, value=3.0)
+    else:
+        linewidth = 3.0
+with col2:
+    if "final point" in elements_to_draw:
+        point_size = st.slider("Point size", min_value=1, max_value=1000, value=300)
+    else:
+        point_size = 300
 
-spacing(3)
+spacing(4)
 st.markdown("##### Data parameters")
-base = st.toggle("Use base 100 format")
+base = st.toggle("Use base 100 format (recommended)", value=True)
 title = st.text_area("Title", value=f"A financial history: {ticker}")
 if base:
-    title += f"(base 100)"
+    title += f" (base 100)"
 
-df = load_yahoo_data(ticker, base=base).head(20)
-start_date = st.date_input(
-    "Start date",
-    min_value=df["Date"].min(),
-    max_value=df["Date"].max(),
-    value=df["Date"].min(),
-    key="startdate",
-)
-end_date = st.date_input(
-    "Start date",
-    min_value=df["Date"].min(),
-    max_value=df["Date"].max(),
-    value=df["Date"].max(),
-    key="endate",
-)
+df = load_yahoo_data(ticker, base=base).head(500)
+
+col1, col2 = st.columns(2)
+with col1:
+    start_date = st.date_input(
+        "Start date",
+        min_value=df["Date"].min(),
+        max_value=df["Date"].max(),
+        value=df["Date"].min(),
+        key="startdate",
+    )
+with col2:
+    end_date = st.date_input(
+        "End date",
+        min_value=df["Date"].min(),
+        max_value=df["Date"].max(),
+        value=df["Date"].max(),
+        key="endate",
+    )
 if end_date < start_date:
     st.error(f"End date ({end_date}) cannot be before start date ({start_date})")
 
@@ -125,6 +135,7 @@ if st.toggle("Create animation") and end_date > start_date:
 
     # create and save animation
     video_id = generate_id(10)
+    video_id = "no_id_yet"
     path = f"video/{ticker}-{video_id}.mp4"
     ani = FuncAnimation(fig, func=update, frames=len(df), fargs=fargs)
     ani.save(path, fps=fps)
