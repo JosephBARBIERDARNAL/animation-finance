@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from src.utils import generate_id
-from src.ui import spacing, header
+from src.ui import spacing, header, footer
 from src.data import load_yahoo_data
 from src.animation import update
 
 header()
 
-spacing(10)
+spacing(15)
 st.markdown("### Customize style and change settings")
 
 # select ticker
@@ -17,6 +17,9 @@ ticker = st.selectbox(
     "Ticker", options=["AAPL", "GOOGL", "MSFT"], key="ticker selection"
 )
 
+
+spacing(3)
+st.markdown("##### Animation parameters")
 col1, col2 = st.columns([1, 1])
 with col1:
     # choose DPI
@@ -38,31 +41,63 @@ with col2:
     )
 
 spacing(3)
+st.markdown("##### Style parameters")
 
-col1, col2, col3, col4 = st.columns([1.2, 1, 3, 3])
+col1, col2 = st.columns(2)
 with col1:
     background_color = st.color_picker("Background", value="#ffffff")
 with col2:
     line_color = st.color_picker("Line", value="#6700D4")
-with col3:
-    spines_to_remove = st.multiselect(
-        "Border to removes", options=["top", "right", "left", "bottom"]
-    )
-with col4:
-    spacing(2)
-    base = st.toggle("Use base 100 format")
+
+spines_to_remove = st.multiselect(
+    "Border to removes",
+    options=["top", "right", "left", "bottom"],
+    default=["top", "right"],
+)
+
+spacing(3)
+st.markdown("##### Chart parameters")
+elements_to_draw = st.multiselect(
+    "Choose elements to put on the chart",
+    options=["line", "final point", "area"],
+    default=["line", "final point"],
+)
+if "line" in elements_to_draw:
+    linewidth = st.slider("Linewidth", min_value=0.1, max_value=10.0, value=1.0)
+if "final point" in elements_to_draw:
+    point_size = st.slider("Point size", min_value=1, max_value=1000, value=100)
+
+spacing(3)
+st.markdown("##### Data parameters")
+base = st.toggle("Use base 100 format")
 title = st.text_area("Title", value=f"A financial history: {ticker}")
 if base:
-    title += f" (base 100)"
+    title += f"(base 100)"
+
+df = load_yahoo_data(ticker, base=base).head(20)
+start_date = st.date_input(
+    "Start date",
+    min_value=df["Date"].min(),
+    max_value=df["Date"].max(),
+    value=df["Date"].min(),
+    key="startdate",
+)
+end_date = st.date_input(
+    "Start date",
+    min_value=df["Date"].min(),
+    max_value=df["Date"].max(),
+    value=df["Date"].max(),
+    key="endate",
+)
+if end_date < start_date:
+    st.error(f"End date ({end_date}) cannot be before start date ({start_date})")
 
 
-spacing(10)
+spacing(15)
 
 
 st.markdown("### Start the program")
-if st.toggle("Create animation"):
-
-    df = load_yahoo_data(ticker, base=base).head(20)
+if st.toggle("Create animation") and end_date > start_date:
 
     # initialize the progress bar
     progress_text = "Creating the animation"
@@ -76,7 +111,17 @@ if st.toggle("Create animation"):
         axs.spines[spines_to_remove].set_visible(False)
 
     # additional arguments for the update() function
-    fargs = (df, axs, f"{ticker}-base", my_bar, line_color, title)
+    fargs = (
+        df,
+        axs,
+        ticker,
+        my_bar,
+        line_color,
+        title,
+        elements_to_draw,
+        linewidth,
+        point_size,
+    )
 
     # create and save animation
     video_id = generate_id(10)
@@ -87,5 +132,15 @@ if st.toggle("Create animation"):
     # display animation
     st.video(path, loop=True, autoplay=True, muted=True)
 
+    # save button
+    with open(path, "rb") as file:
+        btn = st.download_button(
+            label="Download video",
+            data=file,
+            file_name=f"{path.split('/')[-1]}",
+            mime="image/png",
+        )
 
-spacing(10)
+
+spacing(20)
+footer()

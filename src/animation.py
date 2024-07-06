@@ -11,7 +11,18 @@ def custom_formatter(x, pos):
         return f"{x:.0f}"
 
 
-def update(frame, df, ax, ticker, my_bar, line_color, title=""):
+def update(
+    frame,
+    df,
+    ax,
+    ticker,
+    my_bar,
+    line_color,
+    title,
+    elements_to_draw,
+    linewidth,
+    point_size,
+):
 
     # skip first frame
     if frame == 0:
@@ -19,21 +30,27 @@ def update(frame, df, ax, ticker, my_bar, line_color, title=""):
 
     # make the progress bar progress
     current_progress_value = (frame + 1) / len(df)
-    progress_text = f"Work in progress ({current_progress_value*100:.2f}%)"
+    progress_text = f"Work in progress ({current_progress_value*100:.1f}%)"
     my_bar.progress(current_progress_value, text=progress_text)
 
     # initialize subset of data
     subset_df = df.iloc[:frame]
     ax.clear()
 
-    # create the line chart
-    ax.plot(subset_df["Date"], subset_df[ticker], color=line_color)
-    ax.scatter(
-        subset_df["Date"].values[-1],
-        subset_df[ticker].values[-1],
-        color=line_color,
-        s=100,
-    )
+    # create the chart
+    if "line" in elements_to_draw:
+        ax.plot(
+            subset_df["Date"], subset_df[ticker], color=line_color, linewidth=linewidth
+        )
+    if "final point" in elements_to_draw:
+        ax.scatter(
+            subset_df["Date"].values[-1],
+            subset_df[ticker].values[-1],
+            color=line_color,
+            s=point_size,
+        )
+    if "area" in elements_to_draw:
+        ax.fill_between(subset_df["Date"], subset_df[ticker], alpha=0.3)
 
     # custom axes style
     ax.yaxis.set_major_formatter(FuncFormatter(custom_formatter))
@@ -57,8 +74,8 @@ def update(frame, df, ax, ticker, my_bar, line_color, title=""):
     # copyright annotations
     fig_text(
         x=0.5,
-        y=0.7,
-        s="barbierjoseph.com",
+        y=0.8,
+        s="COPYRIGHT\nCOPYRIGHT\nCOPYRIGHT",
         color="grey",
         ha="center",
         fontsize=50,

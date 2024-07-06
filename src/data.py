@@ -32,15 +32,14 @@ def load_yahoo_data(tickers: Union[str, List[str]], base: bool = False) -> pd.Da
 
     if base:
         for ticker in tickers:
-            merged_df[f"{ticker}-base"] = trans_100(merged_df[ticker])
+            merged_df[ticker] = convert_base(merged_df[ticker])
 
     return merged_df.sort_values("Date")
 
 
-def trans_100(a):
+def convert_base(a, b=100):
     a_trans = a[:].copy()
-    a_trans[0] = 100
+    a_trans[0] = b
     for i in range(1, len(a)):
-        a_trans[i] = 100 + ((a[i] - a[0]) * 100 / a[0])
-
+        a_trans[i] = b + ((a[i] - a[0]) * 100 / a[0])
     return a_trans
