@@ -1,18 +1,20 @@
 import yfinance as yf
-import polars as pl
+import pandas as pd
 from typing import Union, List
+import streamlit as st
 
 
-def load_yahoo_data(tickers: Union[str, List[str]]) -> pl.DataFrame:
+def load_yahoo_data(tickers: Union[str, List[str]], base: bool = False) -> pd.DataFrame:
     """
     Load closing price data for one or multiple tickers from Yahoo Finance.
     Returns the maximum available data for all tickers.
 
     Args:
     tickers (str or list of str): Single ticker or list of tickers to fetch data for.
+    base (bool): If True, convert prices to base 100. Default is False.
 
     Returns:
-    polars.DataFrame: DataFrame containing the closing prices for all tickers.
+    pandas.DataFrame: DataFrame containing the closing prices for all tickers.
     """
     if isinstance(tickers, str):
         tickers = [tickers]
@@ -20,12 +22,25 @@ def load_yahoo_data(tickers: Union[str, List[str]]) -> pl.DataFrame:
     data_frames = []
     for ticker in tickers:
         df = yf.Ticker(ticker).history(period="max")
-        df = pl.from_pandas(df.reset_index())
-        df = df.select([pl.col("Date"), pl.col("Close").alias(ticker)])
+        df = df.reset_index()[["Date", "Close"]]
+        df = df.rename(columns={"Close": ticker})
         data_frames.append(df)
 
     merged_df = data_frames[0]
     for df in data_frames[1:]:
-        merged_df = merged_df.join(df, on="Date", how="inner")
+        merged_df = pd.merge(merged_df, df, on="Date", how="inner")
 
-    return merged_df.sort("Date").to_pandas()
+    if base:
+        for ticker in tickers:
+            merged_df[f"{ticker}-base"] = trans_100(merged_df[ticker])
+
+    return merged_df.sort_values("Date")
+
+
+def trans_100(a):
+    a_trans = a[:].copy()
+    a_trans[0] = 100
+    for i in range(1, len(a)):
+        a_trans[i] = 100 + ((a[i] - a[0]) * 100 / a[0])
+
+    return a_trans

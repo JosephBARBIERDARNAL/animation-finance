@@ -2,24 +2,20 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+from src.utils import generate_id
 from src.ui import spacing, header
 from src.data import load_yahoo_data
 from src.animation import update
 
 header()
 
-st.markdown("### Select the company")
+spacing(10)
+st.markdown("### Customize style and change settings")
 
 # select ticker
 ticker = st.selectbox(
     "Ticker", options=["AAPL", "GOOGL", "MSFT"], key="ticker selection"
 )
-df = load_yahoo_data(ticker).tail(20)
-st.dataframe(df)
-
-spacing(10)
-st.markdown("### Customize style and change settings")
-
 
 col1, col2 = st.columns([1, 1])
 with col1:
@@ -43,7 +39,7 @@ with col2:
 
 spacing(3)
 
-col1, col2, col3, col4 = st.columns([1.2, 1, 3, 4])
+col1, col2, col3, col4 = st.columns([1.2, 1, 3, 3])
 with col1:
     background_color = st.color_picker("Background", value="#ffffff")
 with col2:
@@ -53,7 +49,11 @@ with col3:
         "Border to removes", options=["top", "right", "left", "bottom"]
     )
 with col4:
-    title = st.text_area("Title", value=f"A financial history: {ticker}")
+    spacing(2)
+    base = st.toggle("Use base 100 format")
+title = st.text_area("Title", value=f"A financial history: {ticker}")
+if base:
+    title += f" (base 100)"
 
 
 spacing(10)
@@ -62,6 +62,9 @@ spacing(10)
 st.markdown("### Start the program")
 if st.toggle("Create animation"):
 
+    df = load_yahoo_data(ticker, base=base).head(20)
+
+    # initialize the progress bar
     progress_text = "Creating the animation"
     my_bar = st.progress(0, text=progress_text)
 
@@ -73,10 +76,11 @@ if st.toggle("Create animation"):
         axs.spines[spines_to_remove].set_visible(False)
 
     # additional arguments for the update() function
-    fargs = (df, axs, ticker, my_bar, line_color, title)
+    fargs = (df, axs, f"{ticker}-base", my_bar, line_color, title)
 
     # create and save animation
-    path = f"video/anim-{ticker}.mp4"
+    video_id = generate_id(10)
+    path = f"video/{ticker}-{video_id}.mp4"
     ani = FuncAnimation(fig, func=update, frames=len(df), fargs=fargs)
     ani.save(path, fps=fps)
 

@@ -63,7 +63,7 @@ def update(frame, df, ax, ticker, my_bar, line_color, title=""):
         ha="center",
         fontsize=50,
         fontweight="bold",
-        rotation=-30,
+        rotation=-15,
         alpha=0.4,
     )
 
