@@ -2,6 +2,7 @@ from highlight_text import fig_text, ax_text
 from matplotlib.ticker import FuncFormatter
 from matplotlib.font_manager import FontProperties
 import streamlit as st
+import time
 
 # set up the font properties
 personal_path = "/Users/josephbarbier/Library/Fonts/"
@@ -29,18 +30,38 @@ def update(
     elements_to_draw,
     linewidth,
     point_size,
+    start_time=None,
+    time_estimates=None,
 ):
-
-    # skip first frame
+    # Skip first frame
     if frame == 0:
-        return None
+        return None, time.time(), []
 
-    # make the progress bar progress
+    # Initialize timing variables
+    if start_time is None:
+        start_time = time.time()
+        time_estimates = []
+
+    # Calculate progress
     current_progress_value = (frame + 1) / len(df)
-    if int(round(current_progress_value)) == 1:
-        progress_text = f"Almost done ({current_progress_value*100:.1f}%)"
+
+    # Estimate time after a few frames
+    if frame < 5:  # Adjust this number as needed
+        time_estimates.append(time.time() - start_time)
+
+    if frame >= 5:  # Estimate total time after 5 frames
+        avg_frame_time = sum(time_estimates) / len(time_estimates)
+        total_estimated_time = avg_frame_time * len(df)
+        remaining_time = total_estimated_time - (time.time() - start_time)
+
+    # Update progress text
+    if frame < 5:
+        progress_text = f"Estimating time... ({current_progress_value*100:.1f}%)"
     else:
-        progress_text = f"Work in progress ({current_progress_value*100:.1f}%)"
+        elapsed_time = time.time() - start_time
+        remaining_time = max(0, (total_estimated_time - elapsed_time))
+        progress_text = f"Work in progress ({current_progress_value*100:.1f}%) - Est. {remaining_time:.1f}s remaining"
+
     if (frame + 1) == len(df):
         progress_text = f"Done"
     my_bar.progress(current_progress_value, text=progress_text)
@@ -109,4 +130,4 @@ def update(
         alpha=0.4,
     )
 
-    return ax
+    return ax, start_time, time_estimates

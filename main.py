@@ -13,7 +13,7 @@ spacing(15)
 st.markdown("### Customize style and change settings")
 
 # select ticker
-ticker = st.multiselect(
+tickers = st.multiselect(
     "Ticker", options=["AAPL", "GOOGL", "MSFT"], default="AAPL", key="ticker selection"
 )
 
@@ -76,11 +76,11 @@ with col2:
 spacing(4)
 st.markdown("##### Data parameters")
 base = st.toggle("Use base 100 format (recommended)", value=True)
-title = st.text_area("Title", value=f"A financial history: {ticker}")
+title = st.text_area("Title", value=f"A financial history: {tickers}")
 if base:
     title += f" (base 100)"
 
-df = load_yahoo_data(ticker, base=base).head(500)
+df = load_yahoo_data(tickers, base=base).head(100)
 
 col1, col2 = st.columns(2)
 with col1:
@@ -124,7 +124,7 @@ if st.toggle("Create animation") and end_date > start_date:
     fargs = (
         df,
         axs,
-        ticker,
+        tickers,
         my_bar,
         line_color,
         title,
@@ -133,11 +133,44 @@ if st.toggle("Create animation") and end_date > start_date:
         point_size,
     )
 
+    # time estimators
+    start_time = None
+    time_estimates = None
+
     # create and save animation
-    video_id = generate_id(10)
-    video_id = "no_id_yet"
-    path = f"video/{ticker}-{video_id}.mp4"
-    ani = FuncAnimation(fig, func=update, frames=len(df), fargs=fargs)
+    def make_animation(
+        frame,
+        df,
+        ax,
+        tickers,
+        my_bar,
+        line_color,
+        title,
+        elements_to_draw,
+        linewidth,
+        point_size,
+    ):
+        global start_time, time_estimates
+        result = update(
+            frame,
+            df,
+            ax,
+            tickers,
+            my_bar,
+            line_color,
+            title,
+            elements_to_draw,
+            linewidth,
+            point_size,
+            start_time,
+            time_estimates,
+        )
+        if isinstance(result, tuple) and len(result) == 3:
+            ax, start_time, time_estimates = result
+        return ax
+
+    path = f"video/{tickers}.mp4"
+    ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
     ani.save(path, fps=fps)
 
     # display animation
