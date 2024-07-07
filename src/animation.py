@@ -3,10 +3,13 @@ from matplotlib.ticker import FuncFormatter
 from matplotlib.font_manager import FontProperties
 from pypalettes import get_hex
 import streamlit as st
-import time
 from datetime import timedelta
+import time
+import textwrap
+import math
 
 from src.utils import format_date
+from src.text import count_closed_and_enclosed, remove_unmatched_lt
 from src.tickers import company_tickers
 
 # set up the font properties
@@ -26,7 +29,9 @@ def custom_formatter(x, pos):
         return f"{x:.0f}"
 
 
-def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
+def update(
+    frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+):
     # Skip first frame
     if frame == 0:
         return ax
@@ -82,7 +87,7 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
 
         # annotate the last point
         ax_text(
-            subset_df["Index"].values[-1] + 0.5,
+            subset_df["Index"].values[-1] + 1,
             subset_df[ticker].values[-1],
             f"{company_tickers[ticker]} (${subset_df[ticker].values[-1]:,.0f})",
             color=linecolors[i],
@@ -96,15 +101,15 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
     # custom axes style
     ax.yaxis.set_major_formatter(FuncFormatter(custom_formatter))
     ax.set_ylim(
-        subset_df[tickers].min(axis=1).min() * 0.9,
-        subset_df[tickers].max(axis=1).max() * 1.1,
+        df[tickers].min(axis=1).min() * 0.95,
+        df[tickers].max(axis=1).max() * 1.05,
     )
     ax.set_xticks([])
 
     # title
     fig_text(
         x=0.15,
-        y=0.98,
+        y=1 - 0.01,
         s=title,
         fontsize=20,
         ha="left",
@@ -117,7 +122,7 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
     last_date = format_date(subset_df["Date"].max()).upper()
     fig_text(
         x=0.15,
-        y=0.95,
+        y=0.97 - 0.01,
         s=f"$100 invested in {company_tickers[ticker]} in {first_date}",
         fontsize=17,
         ha="left",
@@ -126,7 +131,7 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
     )
     fig_text(
         x=0.15,
-        y=0.92,
+        y=0.94 - 0.01,
         s=f"{last_date}",
         fontsize=14,
         color="grey",
@@ -134,11 +139,53 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
         font=font,
     )
 
+    # get text to display at current frame
+    total_chars = len(description)
+    effective_frame_count = len(df) - 50
+    num_chars = (
+        math.ceil(total_chars * (frame / effective_frame_count))
+        if frame < effective_frame_count
+        else total_chars
+    )
+    current_description = description[:num_chars]
+    current_description = remove_unmatched_lt(
+        current_description
+    )  # remove unmatched '<' characters
+    num_closed_tags = count_closed_and_enclosed(
+        current_description
+    )  # count number of closed tags
+    if num_closed_tags > 0:
+        highlight_textprops = [{"font": bold_font} for _ in range(num_closed_tags)]
+    else:
+        highlight_textprops = None
+    wrapped_text = "\n".join(
+        [
+            textwrap.fill(paragraph, width=60)
+            for paragraph in current_description.split("\n")
+        ]
+    )
+    fig_text(
+        0.15,
+        0.9,
+        wrapped_text,
+        ha="left",
+        va="top",
+        fontsize=12,
+        font=font,
+        color=theme["text-color"],
+        highlight_textprops=highlight_textprops,
+        fig=fig,
+    )
+
     fig.set_tight_layout(True)
 
     return ax
 
 
-def make_animation(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
-    result = update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme)
+def make_animation(
+    frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+):
+    result = update(
+        frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+    )
     return ax

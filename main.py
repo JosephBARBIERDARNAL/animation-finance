@@ -71,10 +71,14 @@ if len(tickers) > 0:
     spacing(4)
     st.markdown("##### Data parameters")
     base = st.toggle("Use base 100 format (recommended)", value=True)
-    title = st.text_area("Title", value=f"A financial history")
+    title = st.text_input("Title", value=f"A financial history")
+    description = st.text_area(
+        "Description",
+        value="The description is supposed to be a large text that will appears throughout the video. Hope it renders well",
+    )
 
-    df = load_yahoo_data(tickers).tail(1000)
-    n_wanted = st.slider("Number of points", min_value=1, max_value=len(df), value=30)
+    df = load_yahoo_data(tickers)  # .tail(1000)
+    n_wanted = st.slider("Number of points", min_value=10, max_value=len(df), value=30)
     df = df.tail(n_wanted).reset_index()
     if base:
         for ticker in tickers:
@@ -121,7 +125,20 @@ if len(tickers) > 0:
             axs.spines[spines_to_remove].set_visible(False)
 
         # additional arguments for the update() function
-        fargs = (df, axs, fig, tickers, my_bar, title, elements_to_draw, theme)
+        fargs = (
+            df,
+            axs,
+            fig,
+            tickers,
+            my_bar,
+            title,
+            description,
+            elements_to_draw,
+            theme,
+        )
+
+        # display stats of current animation
+        st.write(f"Number of frames: {len(df)}")
 
         path = f"video/{tickers}.mp4"
         ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
