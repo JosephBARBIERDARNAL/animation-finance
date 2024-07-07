@@ -1,13 +1,20 @@
 from highlight_text import fig_text, ax_text
 from matplotlib.ticker import FuncFormatter
 from matplotlib.font_manager import FontProperties
+from pypalettes import get_hex
 import streamlit as st
 import time
+from datetime import timedelta
+
+from src.utils import format_date
+from src.tickers import company_tickers
 
 # set up the font properties
 personal_path = "/Users/josephbarbier/Library/Fonts/"
 font = FontProperties(fname=personal_path + "FiraSans-Light.ttf")
 bold_font = FontProperties(fname=personal_path + "FiraSans-Medium.ttf")
+
+linecolors = get_hex("Acadia") + get_hex("AirNomads") + get_hex("Alacena")
 
 
 def custom_formatter(x, pos):
@@ -19,85 +26,68 @@ def custom_formatter(x, pos):
         return f"{x:.0f}"
 
 
-def update(
-    frame,
-    df,
-    ax,
-    tickers,
-    my_bar,
-    line_color,
-    title,
-    elements_to_draw,
-    linewidth,
-    point_size,
-    start_time=None,
-    time_estimates=None,
-):
+def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
     # Skip first frame
     if frame == 0:
-        return None, time.time(), []
+        return ax
 
-    # Initialize timing variables
-    if start_time is None:
-        start_time = time.time()
-        time_estimates = []
+    # apply theme
+    ax.set_facecolor(theme["background-color"])
+    ax.tick_params(color=theme["title-color"], labelcolor=theme["title-color"])
+    for spine in ax.spines.values():
+        spine.set_edgecolor(theme["title-color"])
 
     # Calculate progress
     current_progress_value = (frame + 1) / len(df)
 
-    # Estimate time after a few frames
-    if frame < 5:  # Adjust this number as needed
-        time_estimates.append(time.time() - start_time)
-
-    if frame >= 5:  # Estimate total time after 5 frames
-        avg_frame_time = sum(time_estimates) / len(time_estimates)
-        total_estimated_time = avg_frame_time * len(df)
-        remaining_time = total_estimated_time - (time.time() - start_time)
-
     # Update progress text
-    if frame < 5:
-        progress_text = f"Estimating time... ({current_progress_value*100:.1f}%)"
-    else:
-        elapsed_time = time.time() - start_time
-        remaining_time = max(0, (total_estimated_time - elapsed_time))
-        progress_text = f"Work in progress ({current_progress_value*100:.1f}%) - Est. {remaining_time:.1f}s remaining"
-
+    progress_text = f"Work in progress ({current_progress_value*100:.1f}%)"
     if (frame + 1) == len(df):
         progress_text = f"Done"
     my_bar.progress(current_progress_value, text=progress_text)
 
     # initialize subset of data
-    subset_df = df.iloc[:frame]
+    range_days = 30
+    if frame < range_days:
+        subset_df = df.iloc[:frame]
+    else:
+        subset_df = df.iloc[frame - range_days : frame]
     ax.clear()
 
-    for ticker in tickers:
+    for i, ticker in enumerate(tickers):
 
         # create the chart
         if "line" in elements_to_draw:
             ax.plot(
-                subset_df["Date"],
+                subset_df["Index"],
                 subset_df[ticker],
-                color=line_color,
-                linewidth=linewidth,
+                color=linecolors[i],
+                linewidth=1.4,
             )
         if "final point" in elements_to_draw:
             ax.scatter(
-                subset_df["Date"].values[-1],
+                subset_df["Index"].values[-1],
                 subset_df[ticker].values[-1],
-                color=line_color,
-                s=point_size,
+                color=linecolors[i],
+                s=100,
             )
         if "area" in elements_to_draw:
-            ax.fill_between(subset_df["Date"], 100, subset_df[ticker], alpha=0.3)
+            ax.fill_between(
+                subset_df["Index"],
+                100,
+                subset_df[ticker],
+                color=linecolors[i],
+                alpha=0.3,
+            )
 
         # annotate the last point
         ax_text(
-            subset_df["Date"].values[-1],
-            subset_df[ticker].values[-1] * 1.06,
-            f"{ticker} ({subset_df[ticker].values[-1]:,.0f})",
-            color=line_color,
+            subset_df["Index"].values[-1] + 2,
+            subset_df[ticker].values[-1],
+            f"{company_tickers[ticker]} ({subset_df[ticker].values[-1]:,.0f})",
+            color=linecolors[i],
             fontsize=18,
-            ha="right",
+            ha="left",
             va="center",
             font=bold_font,
             ax=ax,
@@ -105,29 +95,36 @@ def update(
 
     # custom axes style
     ax.yaxis.set_major_formatter(FuncFormatter(custom_formatter))
-    ax.set_ylim(0, subset_df[tickers].max(axis=1).max() * 1.1)
+    ax.set_ylim(
+        subset_df[tickers].min(axis=1).min() * 0.9,
+        subset_df[tickers].max(axis=1).max() * 1.1,
+    )
+    ax.set_xticks([])
 
     # title
     fig_text(
         x=0.15,
-        y=0.96,
+        y=0.98,
         s=title,
         fontsize=20,
         ha="left",
+        color=theme["title-color"],
         font=bold_font,
     )
 
-    # copyright annotations
+    # subtitle
+    first_date = format_date(subset_df["Date"].min()).upper()
+    last_date = format_date(subset_df["Date"].max()).upper()
     fig_text(
-        x=0.5,
-        y=0.8,
-        s="COPYRIGHT\nCOPYRIGHT\nCOPYRIGHT",
+        x=0.15,
+        y=0.94,
+        s=f"{first_date}",
+        fontsize=14,
         color="grey",
-        ha="center",
-        fontsize=50,
-        fontweight="bold",
-        rotation=-15,
-        alpha=0.4,
+        ha="left",
+        font=font,
     )
 
-    return ax, start_time, time_estimates
+    fig.set_tight_layout(True)
+
+    return ax

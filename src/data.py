@@ -1,17 +1,19 @@
 import yfinance as yf
 import pandas as pd
+import numpy as np
 from typing import Union, List
 import streamlit as st
+from scipy import interpolate
+from datetime import datetime, timezone
 
 
-def load_yahoo_data(tickers: Union[str, List[str]], base: bool = False) -> pd.DataFrame:
+def load_yahoo_data(tickers: Union[str, List[str]]) -> pd.DataFrame:
     """
     Load closing price data for one or multiple tickers from Yahoo Finance.
     Returns the maximum available data for all tickers.
 
     Args:
     tickers (str or list of str): Single ticker or list of tickers to fetch data for.
-    base (bool): If True, convert prices to base 100. Default is False.
 
     Returns:
     pandas.DataFrame: DataFrame containing the closing prices for all tickers.
@@ -30,16 +32,52 @@ def load_yahoo_data(tickers: Union[str, List[str]], base: bool = False) -> pd.Da
     for df in data_frames[1:]:
         merged_df = pd.merge(merged_df, df, on="Date", how="inner")
 
-    if base:
-        for ticker in tickers:
-            merged_df[ticker] = convert_base(merged_df[ticker])
-
+    merged_df["Index"] = pd.Series(range(1, len(merged_df) + 1))
     return merged_df.sort_values("Date")
 
 
-def convert_base(a, b=100):
-    a_trans = a[:].copy()
-    a_trans[0] = b
+def convert_base(a, base=100):
+    a_trans = a[:]
+    a_trans[0] = base
     for i in range(1, len(a)):
-        a_trans[i] = b + ((a[i] - a[0]) * 100 / a[0])
+        a_trans[i] = base + ((a[i] - a[0]) * 100 / a[0])
     return a_trans
+
+
+def interpolate_data(
+    df: pd.DataFrame, method: str = "cubic", num_points: int = 1000
+) -> pd.DataFrame:
+    """
+    Interpolate data to add more smooth points.
+
+    Args:
+    df (pandas.DataFrame): Input DataFrame with 'Index', 'Date', and ticker columns.
+    method (str): Interpolation method. Options: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.
+    num_points (int): Number of points to interpolate to.
+
+    Returns:
+    pandas.DataFrame: DataFrame with interpolated data.
+    """
+    x = df["Index"].values
+    new_x = np.linspace(x.min(), x.max(), num_points)
+
+    interpolated_df = pd.DataFrame({"Index": new_x})
+
+    # Convert dates to timestamps, interpolate, then convert back to dates
+    date_timestamps = df["Date"].astype(int) / 10**9  # Convert to Unix timestamp
+    f_date = interpolate.interp1d(x, date_timestamps, kind="linear")
+    interpolated_timestamps = f_date(new_x)
+    interpolated_df["Date"] = pd.to_datetime(interpolated_timestamps, unit="s")
+
+    # If the original dates had timezone info, add it back
+    if df["Date"].dt.tz is not None:
+        interpolated_df["Date"] = interpolated_df["Date"].dt.tz_localize(
+            df["Date"].dt.tz
+        )
+
+    for column in df.columns:
+        if column not in ["Index", "Date"]:
+            f = interpolate.interp1d(x, df[column].values, kind=method)
+            interpolated_df[column] = f(new_x)
+
+    return interpolated_df
