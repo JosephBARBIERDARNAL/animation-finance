@@ -33,9 +33,9 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
 
     # apply theme
     ax.set_facecolor(theme["background-color"])
-    ax.tick_params(color=theme["title-color"], labelcolor=theme["title-color"])
+    ax.tick_params(color=theme["text-color"], labelcolor=theme["text-color"])
     for spine in ax.spines.values():
-        spine.set_edgecolor(theme["title-color"])
+        spine.set_edgecolor(theme["text-color"])
 
     # Calculate progress
     current_progress_value = (frame + 1) / len(df)
@@ -82,9 +82,9 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
 
         # annotate the last point
         ax_text(
-            subset_df["Index"].values[-1] + 2,
+            subset_df["Index"].values[-1] + 0.5,
             subset_df[ticker].values[-1],
-            f"{company_tickers[ticker]} ({subset_df[ticker].values[-1]:,.0f})",
+            f"{company_tickers[ticker]} (${subset_df[ticker].values[-1]:,.0f})",
             color=linecolors[i],
             fontsize=18,
             ha="left",
@@ -108,17 +108,26 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
         s=title,
         fontsize=20,
         ha="left",
-        color=theme["title-color"],
+        color=theme["text-color"],
         font=bold_font,
     )
 
     # subtitle
-    first_date = format_date(subset_df["Date"].min()).upper()
+    first_date = format_date(df["Date"].min())
     last_date = format_date(subset_df["Date"].max()).upper()
     fig_text(
         x=0.15,
-        y=0.94,
-        s=f"{first_date}",
+        y=0.95,
+        s=f"$100 invested in {company_tickers[ticker]} in {first_date}",
+        fontsize=17,
+        ha="left",
+        color=theme["text-color"],
+        font=font,
+    )
+    fig_text(
+        x=0.15,
+        y=0.92,
+        s=f"{last_date}",
         fontsize=14,
         color="grey",
         ha="left",
@@ -127,4 +136,9 @@ def update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
 
     fig.set_tight_layout(True)
 
+    return ax
+
+
+def make_animation(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme):
+    result = update(frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme)
     return ax

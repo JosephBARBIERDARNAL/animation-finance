@@ -4,7 +4,7 @@ from matplotlib.animation import FuncAnimation
 
 from src.ui import spacing, header, footer
 from src.data import load_yahoo_data, convert_base, interpolate_data
-from src.animation import update
+from src.animation import update, make_animation
 from src.tickers import company_tickers
 from src.theme import light_theme, dark_theme
 
@@ -18,6 +18,8 @@ tickers = st.multiselect(
     "Ticker", options=company_tickers.keys(), default="AAPL", key="ticker selection"
 )
 if len(tickers) > 0:
+    if len(tickers) > 1:
+        tickers = tickers[0]
 
     spacing(4)
     st.markdown("##### Animation parameters")
@@ -73,14 +75,10 @@ if len(tickers) > 0:
 
     df = load_yahoo_data(tickers).tail(1000)
     n_wanted = st.slider("Number of points", min_value=1, max_value=len(df), value=30)
-    df = df.head(n_wanted).reset_index()
+    df = df.tail(n_wanted).reset_index()
     if base:
         for ticker in tickers:
             df[ticker] = convert_base(df[ticker])
-
-    interpolate = st.toggle("Interpolate")
-    if interpolate:
-        df = df
 
     col1, col2 = st.columns(2)
     with col1:
@@ -102,10 +100,14 @@ if len(tickers) > 0:
     if end_date < start_date:
         st.error(f"End date ({end_date}) cannot be before start date ({start_date})")
 
+    if st.toggle("Interpolate"):
+        df = interpolate_data(df)
+
+    st.dataframe(df)
+
     spacing(15)
 
     st.markdown("### Start the program")
-    st.dataframe(df)
     if st.toggle("Create animation") and end_date > start_date:
 
         # initialize the progress bar
@@ -120,15 +122,6 @@ if len(tickers) > 0:
 
         # additional arguments for the update() function
         fargs = (df, axs, fig, tickers, my_bar, title, elements_to_draw, theme)
-
-        # create and save animation
-        def make_animation(
-            frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme
-        ):
-            result = update(
-                frame, df, ax, fig, tickers, my_bar, title, elements_to_draw, theme
-            )
-            return ax
 
         path = f"video/{tickers}.mp4"
         ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)

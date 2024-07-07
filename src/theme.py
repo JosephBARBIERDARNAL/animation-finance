@@ -1,3 +1,3 @@
-light_theme = {"background-color": "white", "title-color": "black"}
+light_theme = {"background-color": "white", "text-color": "black"}
 
-dark_theme = {"background-color": "black", "title-color": "white"}
+dark_theme = {"background-color": "black", "text-color": "white"}

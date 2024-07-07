@@ -37,7 +37,7 @@ def load_yahoo_data(tickers: Union[str, List[str]]) -> pd.DataFrame:
 
 
 def convert_base(a, base=100):
-    a_trans = a[:]
+    a_trans = a[:].copy()
     a_trans[0] = base
     for i in range(1, len(a)):
         a_trans[i] = base + ((a[i] - a[0]) * 100 / a[0])
@@ -45,7 +45,7 @@ def convert_base(a, base=100):
 
 
 def interpolate_data(
-    df: pd.DataFrame, method: str = "cubic", num_points: int = 1000
+    df: pd.DataFrame, method: str = "linear", num_points: int = 1000
 ) -> pd.DataFrame:
     """
     Interpolate data to add more smooth points.
@@ -63,17 +63,10 @@ def interpolate_data(
 
     interpolated_df = pd.DataFrame({"Index": new_x})
 
-    # Convert dates to timestamps, interpolate, then convert back to dates
-    date_timestamps = df["Date"].astype(int) / 10**9  # Convert to Unix timestamp
-    f_date = interpolate.interp1d(x, date_timestamps, kind="linear")
-    interpolated_timestamps = f_date(new_x)
-    interpolated_df["Date"] = pd.to_datetime(interpolated_timestamps, unit="s")
-
-    # If the original dates had timezone info, add it back
-    if df["Date"].dt.tz is not None:
-        interpolated_df["Date"] = interpolated_df["Date"].dt.tz_localize(
-            df["Date"].dt.tz
-        )
+    # Convert dates to numbers, interpolate, then convert back to dates
+    date_nums = pd.to_numeric(df["Date"])
+    f_date = interpolate.interp1d(x, date_nums, kind="linear")
+    interpolated_df["Date"] = pd.to_datetime(f_date(new_x).astype(int))
 
     for column in df.columns:
         if column not in ["Index", "Date"]:
