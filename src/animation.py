@@ -4,6 +4,7 @@ from matplotlib.font_manager import FontProperties
 from pypalettes import get_hex
 import streamlit as st
 from datetime import timedelta
+from lazyfont import load_font
 import time
 import textwrap
 import math
@@ -13,11 +14,10 @@ from src.text import count_closed_and_enclosed, remove_unmatched_lt
 from src.tickers import company_tickers
 
 # set up the font properties
-personal_path = "/Users/josephbarbier/Library/Fonts/"
-font = FontProperties(fname=personal_path + "FiraSans-Light.ttf")
-bold_font = FontProperties(fname=personal_path + "FiraSans-Medium.ttf")
+font_name = "AbhayaLibre"
 
-linecolors = get_hex("Acadia") + get_hex("AirNomads") + get_hex("Alacena")
+
+linecolors = get_hex("AirNomads") + get_hex("Alacena")
 
 
 def custom_formatter(x, pos):
@@ -30,11 +30,26 @@ def custom_formatter(x, pos):
 
 
 def update(
-    frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+    frame,
+    df,
+    ax,
+    fig,
+    tickers,
+    my_bar,
+    title,
+    description,
+    elements_to_draw,
+    theme,
+    output_format,
+    font_name,
 ):
     # Skip first frame
     if frame == 0:
         return ax
+
+    # set font
+    font = load_font(font_name)
+    bold_font = load_font(font_name, weight="Bold")
 
     # apply theme
     ax.set_facecolor(theme["background-color"])
@@ -57,6 +72,7 @@ def update(
         subset_df = df.iloc[:frame]
     else:
         subset_df = df.iloc[frame - range_days : frame]
+    subset_df = df.iloc[:frame]
     ax.clear()
 
     for i, ticker in enumerate(tickers):
@@ -101,17 +117,33 @@ def update(
     # custom axes style
     ax.yaxis.set_major_formatter(FuncFormatter(custom_formatter))
     ax.set_ylim(
-        df[tickers].min(axis=1).min() * 0.95,
-        df[tickers].max(axis=1).max() * 1.05,
+        subset_df[tickers].min(axis=1).min() * 0.95,
+        subset_df[tickers].max(axis=1).max() * 1.05,
     )
     ax.set_xticks([])
 
+    # get text position according to output format
+    if output_format == "Mobile":
+        x_pos = 0.1
+        y_pos_title = 0.98
+        y_pos_subtitle = 0.96
+        y_pos_date = 0.94
+        y_pos_description = 0.9
+        max_text_wrap = 80
+    elif output_format == "Desktop":
+        x_pos = 0.05
+        y_pos_title = 0.94
+        y_pos_subtitle = 0.9
+        y_pos_date = 0.86
+        y_pos_description = 0.8
+        max_text_wrap = 160
+
     # title
     fig_text(
-        x=0.15,
-        y=1 - 0.01,
+        x=x_pos,
+        y=y_pos_title,
         s=title,
-        fontsize=20,
+        fontsize=25,
         ha="left",
         color=theme["text-color"],
         font=bold_font,
@@ -121,19 +153,19 @@ def update(
     first_date = format_date(df["Date"].min())
     last_date = format_date(subset_df["Date"].max()).upper()
     fig_text(
-        x=0.15,
-        y=0.97 - 0.01,
+        x=x_pos,
+        y=y_pos_subtitle,
         s=f"$100 invested in {company_tickers[ticker]} in {first_date}",
-        fontsize=17,
+        fontsize=20,
         ha="left",
         color=theme["text-color"],
         font=font,
     )
     fig_text(
-        x=0.15,
-        y=0.94 - 0.01,
+        x=x_pos,
+        y=y_pos_date,
         s=f"{last_date}",
-        fontsize=14,
+        fontsize=16,
         color="grey",
         ha="left",
         font=font,
@@ -160,17 +192,17 @@ def update(
         highlight_textprops = None
     wrapped_text = "\n".join(
         [
-            textwrap.fill(paragraph, width=60)
+            textwrap.fill(paragraph, width=max_text_wrap)
             for paragraph in current_description.split("\n")
         ]
     )
     fig_text(
-        0.15,
-        0.9,
+        x_pos,
+        y_pos_description,
         wrapped_text,
         ha="left",
         va="top",
-        fontsize=12,
+        fontsize=14,
         font=font,
         color=theme["text-color"],
         highlight_textprops=highlight_textprops,
@@ -183,9 +215,31 @@ def update(
 
 
 def make_animation(
-    frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+    frame,
+    df,
+    ax,
+    fig,
+    tickers,
+    my_bar,
+    title,
+    description,
+    elements_to_draw,
+    theme,
+    output_format,
+    font_name,
 ):
     result = update(
-        frame, df, ax, fig, tickers, my_bar, title, description, elements_to_draw, theme
+        frame,
+        df,
+        ax,
+        fig,
+        tickers,
+        my_bar,
+        title,
+        description,
+        elements_to_draw,
+        theme,
+        output_format,
+        font_name,
     )
     return ax

@@ -26,6 +26,10 @@ def load_yahoo_data(tickers: Union[str, List[str]]) -> pd.DataFrame:
         df = yf.Ticker(ticker).history(period="max")
         df = df.reset_index()[["Date", "Close"]]
         df = df.rename(columns={"Close": ticker})
+        if len(df) == 0:
+            raise ValueError(
+                f"It's likely that the ticker ({ticker}) is invalid. Have a look at https://finance.yahoo.com/lookup/"
+            )
         data_frames.append(df)
 
     merged_df = data_frames[0]

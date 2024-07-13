@@ -6,12 +6,12 @@ def spacing(n: int):
         st.write("")
 
 
-def header():
-    st.html("<center><h1>A financial history</h1></center>")
+def header(marginBottom=2):
+    st.html("<center><h2>A financial history</h2></center>")
     st.html(
-        "<center><h4>Use historical financial data to make smooth video that tells a story.</h4></center>"
+        "<center><p style='font-size:20px;'>Use historical financial data to make <b>smooth</b>, <b>clean</b> and <b>customizable</b> video that tells a story.</p></center>"
     )
-    spacing(6)
+    spacing(marginBottom)
 
 
 def footer():
