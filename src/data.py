@@ -49,7 +49,7 @@ def convert_base(a, base=100):
 
 
 def interpolate_data(
-    df: pd.DataFrame, method: str = "linear", num_points: int = 1000
+    df: pd.DataFrame, method: str = "linear", factor: float = 2
 ) -> pd.DataFrame:
     """
     Interpolate data to add more smooth points.
@@ -57,12 +57,13 @@ def interpolate_data(
     Args:
     df (pandas.DataFrame): Input DataFrame with 'Index', 'Date', and ticker columns.
     method (str): Interpolation method. Options: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.
-    num_points (int): Number of points to interpolate to.
+    factor (float): Factor to multiply the number of points by for interpolation.
 
     Returns:
     pandas.DataFrame: DataFrame with interpolated data.
     """
     x = df["Index"].values
+    num_points = int(len(x) * factor)
     new_x = np.linspace(x.min(), x.max(), num_points)
 
     interpolated_df = pd.DataFrame({"Index": new_x})

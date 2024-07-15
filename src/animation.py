@@ -125,6 +125,8 @@ def update(
     # get text position according to output format
     if output_format == "Mobile":
         x_pos = 0.1
+        x_pos_credit = 0.7
+        y_pos_credit = 0.05
         y_pos_title = 0.98
         y_pos_subtitle = 0.96
         y_pos_date = 0.94
@@ -132,6 +134,8 @@ def update(
         max_text_wrap = 80
     elif output_format == "Desktop":
         x_pos = 0.05
+        x_pos_credit = 0.8
+        y_pos_credit = 0.05
         y_pos_title = 0.94
         y_pos_subtitle = 0.9
         y_pos_date = 0.86
@@ -155,7 +159,7 @@ def update(
     fig_text(
         x=x_pos,
         y=y_pos_subtitle,
-        s=f"$100 invested in {company_tickers[ticker]} in {first_date}",
+        s=f"$100 invested in {first_date}",
         fontsize=20,
         ha="left",
         color=theme["text-color"],
@@ -169,6 +173,17 @@ def update(
         color="grey",
         ha="left",
         font=font,
+    )
+
+    # credit
+    fig_text(
+        x=x_pos_credit,
+        y=y_pos_credit,
+        s=f"Developed by <barbierjoseph.com>",
+        highlight_textprops=[{"font": bold_font}],
+        font=font,
+        fontsize=12,
+        color=theme["text-color"],
     )
 
     # get text to display at current frame

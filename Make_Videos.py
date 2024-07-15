@@ -84,15 +84,15 @@ if len(tickers) > 0:
             options=["line", "final point", "area"],
             default=["line", "final point", "area"],
         )
+        title = st.text_input("Title", value=f"A financial history")
+        description = st.text_area(
+            "Description",
+            value="The description is supposed to be a large text that will appears throughout the video. Hope it renders well.",
+        )
 
         spacing(4)
         st.markdown("##### Data parameters")
         base = st.toggle("Use base 100 format (recommended)", value=True)
-        title = st.text_input("Title", value=f"A financial history")
-        description = st.text_area(
-            "Description",
-            value="The description is supposed to be a large text that will appears throughout the video. Hope it renders well",
-        )
 
         df = load_yahoo_data(tickers)
         n_wanted = st.slider(
@@ -126,9 +126,14 @@ if len(tickers) > 0:
             )
 
         if st.toggle("Interpolate"):
-            df = interpolate_data(df)
-
-        st.dataframe(df)
+            interpolation_factor = st.slider(
+                "Factor of interpolation",
+                min_value=1,
+                max_value=10,
+                value=3,
+                help="An interpolation factor of 3 means that the data has 3 times more data points. Warning: the higher this value, the longer the video will take to create.",
+            )
+            df = interpolate_data(df, factor=interpolation_factor)
 
     st.markdown("### Start the program")
 
@@ -166,7 +171,7 @@ if len(tickers) > 0:
             font_name,
         )
 
-        path = f"video/{tickers}.mp4"
+        path = f"video/{tickers}.gif"
         ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
         ani.save(path, fps=fps)
 
