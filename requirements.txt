@@ -1,0 +1,10 @@
+highlight_text==0.2
+matplotlib==3.9.1
+streamlit==1.36.0
+highlight_text==0.2
+pypalettes==0.1.1
+yfinance==0.2.40
+pandas==2.2.2
+numpy==2.0.0
+scipy==1.14.0
+git+https://github.com/JosephBARBIERDARNAL/pyfonts.git

@@ -4,7 +4,7 @@ from matplotlib.font_manager import FontProperties
 from pypalettes import get_hex
 import streamlit as st
 from datetime import timedelta
-from lazyfont import load_font
+from pyfonts import load_font
 import time
 import textwrap
 import math
@@ -12,10 +12,6 @@ import math
 from src.utils import format_date
 from src.text import count_closed_and_enclosed, remove_unmatched_lt
 from src.tickers import company_tickers
-
-# set up the font properties
-font_name = "AbhayaLibre"
-
 
 linecolors = get_hex("AirNomads") + get_hex("Alacena")
 
@@ -48,8 +44,12 @@ def update(
         return ax
 
     # set font
-    font = load_font(font_name)
-    bold_font = load_font(font_name, weight="Bold")
+    font = load_font(
+        font_url="https://github.com/google/fonts/blob/main/ofl/amaranth/Amaranth-Regular.ttf?raw=true"
+    )
+    bold_font = load_font(
+        font_url="https://github.com/google/fonts/blob/main/ofl/amaranth/Amaranth-Bold.ttf?raw=true"
+    )
 
     # apply theme
     ax.set_facecolor(theme["background-color"])
