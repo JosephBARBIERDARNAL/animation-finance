@@ -123,17 +123,17 @@ def update(
     ax.set_xticks([])
 
     # get text position according to output format
-    if output_format == "Mobile":
+    if output_format == "Portrait":
         x_pos = 0.1
-        x_pos_credit = 0.7
+        x_pos_credit = 0.6
         y_pos_credit = 0.05
         y_pos_title = 0.98
         y_pos_subtitle = 0.96
         y_pos_date = 0.94
         y_pos_description = 0.9
-        max_text_wrap = 80
-    elif output_format == "Desktop":
-        x_pos = 0.05
+        max_text_wrap = 75
+    elif output_format == "Landscape":
+        x_pos = 0.07
         x_pos_credit = 0.8
         y_pos_credit = 0.05
         y_pos_title = 0.94
@@ -141,6 +141,15 @@ def update(
         y_pos_date = 0.86
         y_pos_description = 0.8
         max_text_wrap = 160
+    elif output_format == "Square":
+        x_pos = 0.12
+        x_pos_credit = 0.6
+        y_pos_credit = 0.05
+        y_pos_title = 0.94
+        y_pos_subtitle = 0.9
+        y_pos_date = 0.86
+        y_pos_description = 0.8
+        max_text_wrap = 75
 
     # title
     fig_text(

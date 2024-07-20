@@ -67,14 +67,23 @@ if len(tickers) > 0:
                 theme = dark_theme
 
         with col2:
+            options_format_video = [
+                "Landscape",
+                "Portrait",
+                "Square",
+            ]
             output_format = st.selectbox(
                 "Output format",
-                options=["Mobile", "Desktop"],
+                options=options_format_video,
             )
-            if output_format == "Mobile":
-                figsize = (10, 19)
-            elif output_format == "Desktop":
-                figsize = (19, 10)
+            if output_format == "Landscape":
+                figsize = (12.8, 7.2)
+            elif output_format == "Portrait":
+                figsize = (7.2, 12.8)
+            elif output_format == "Square":
+                figsize = (7.2, 7.2)
+            else:
+                st.stop("some bug in the matrix")
         font_name = st.selectbox("Font", options=["AbhayaLibre", "Sarabun", "Caladea"])
 
         spacing(4)
@@ -171,7 +180,7 @@ if len(tickers) > 0:
             font_name,
         )
 
-        path = f"video/{tickers}.gif"
+        path = f"video/{tickers}.mp4"
         ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
         ani.save(path, fps=fps)
 
