@@ -1,5 +1,4 @@
 from datetime import datetime
-import streamlit as st
 
 
 def format_date(date):

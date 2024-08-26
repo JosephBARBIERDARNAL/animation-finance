@@ -2,15 +2,8 @@ from highlight_text import fig_text, ax_text
 from matplotlib.ticker import FuncFormatter
 from matplotlib.font_manager import FontProperties
 from pypalettes import get_hex
-import streamlit as st
-from datetime import timedelta
-from pyfonts import load_font
-import time
-import textwrap
-import math
 
 from src.utils import format_date
-from src.text import count_closed_and_enclosed, remove_unmatched_lt
 from src.tickers import company_tickers
 
 linecolors = get_hex("AirNomads") + get_hex("Alacena")
@@ -33,23 +26,17 @@ def update(
     tickers,
     my_bar,
     title,
-    description,
     elements_to_draw,
     theme,
     output_format,
-    font_name,
 ):
     # Skip first frame
     if frame == 0:
         return ax
 
     # set font
-    font = load_font(
-        font_url="https://github.com/google/fonts/blob/main/ofl/amaranth/Amaranth-Regular.ttf?raw=true"
-    )
-    bold_font = load_font(
-        font_url="https://github.com/google/fonts/blob/main/ofl/amaranth/Amaranth-Bold.ttf?raw=true"
-    )
+    font = FontProperties(fname="src/fonts/FiraSans-Regular.ttf")
+    bold_font = FontProperties(fname="src/fonts/FiraSans-Bold.ttf")
 
     # apply theme
     ax.set_facecolor(theme["background-color"])
@@ -63,15 +50,10 @@ def update(
     # Update progress text
     progress_text = f"Work in progress ({current_progress_value*100:.1f}%)"
     if (frame + 1) == len(df):
-        progress_text = f"Done"
+        progress_text = "Done"
     my_bar.progress(current_progress_value, text=progress_text)
 
     # initialize subset of data
-    range_days = 30
-    if frame < range_days:
-        subset_df = df.iloc[:frame]
-    else:
-        subset_df = df.iloc[frame - range_days : frame]
     subset_df = df.iloc[:frame]
     ax.clear()
 
@@ -128,28 +110,22 @@ def update(
         x_pos_credit = 0.6
         y_pos_credit = 0.05
         y_pos_title = 0.98
-        y_pos_subtitle = 0.96
-        y_pos_date = 0.94
-        y_pos_description = 0.9
-        max_text_wrap = 75
+        y_pos_subtitle = 0.95
+        y_pos_date = 0.92
     elif output_format == "Landscape":
         x_pos = 0.07
-        x_pos_credit = 0.8
-        y_pos_credit = 0.05
+        x_pos_credit = 0.75
+        y_pos_credit = 0.06
         y_pos_title = 0.94
-        y_pos_subtitle = 0.9
-        y_pos_date = 0.86
-        y_pos_description = 0.8
-        max_text_wrap = 160
+        y_pos_subtitle = 0.89
+        y_pos_date = 0.84
     elif output_format == "Square":
-        x_pos = 0.12
+        x_pos = 0.11
         x_pos_credit = 0.6
         y_pos_credit = 0.05
         y_pos_title = 0.94
-        y_pos_subtitle = 0.9
-        y_pos_date = 0.86
-        y_pos_description = 0.8
-        max_text_wrap = 75
+        y_pos_subtitle = 0.89
+        y_pos_date = 0.84
 
     # title
     fig_text(
@@ -188,49 +164,11 @@ def update(
     fig_text(
         x=x_pos_credit,
         y=y_pos_credit,
-        s=f"Developed by <barbierjoseph.com>",
+        s="Developed by <barbierjoseph.com>",
         highlight_textprops=[{"font": bold_font}],
         font=font,
         fontsize=12,
         color=theme["text-color"],
-    )
-
-    # get text to display at current frame
-    total_chars = len(description)
-    effective_frame_count = len(df) - 50
-    num_chars = (
-        math.ceil(total_chars * (frame / effective_frame_count))
-        if frame < effective_frame_count
-        else total_chars
-    )
-    current_description = description[:num_chars]
-    current_description = remove_unmatched_lt(
-        current_description
-    )  # remove unmatched '<' characters
-    num_closed_tags = count_closed_and_enclosed(
-        current_description
-    )  # count number of closed tags
-    if num_closed_tags > 0:
-        highlight_textprops = [{"font": bold_font} for _ in range(num_closed_tags)]
-    else:
-        highlight_textprops = None
-    wrapped_text = "\n".join(
-        [
-            textwrap.fill(paragraph, width=max_text_wrap)
-            for paragraph in current_description.split("\n")
-        ]
-    )
-    fig_text(
-        x_pos,
-        y_pos_description,
-        wrapped_text,
-        ha="left",
-        va="top",
-        fontsize=14,
-        font=font,
-        color=theme["text-color"],
-        highlight_textprops=highlight_textprops,
-        fig=fig,
     )
 
     fig.set_tight_layout(True)
@@ -246,13 +184,11 @@ def make_animation(
     tickers,
     my_bar,
     title,
-    description,
     elements_to_draw,
     theme,
     output_format,
-    font_name,
 ):
-    result = update(
+    update(
         frame,
         df,
         ax,
@@ -260,10 +196,8 @@ def make_animation(
         tickers,
         my_bar,
         title,
-        description,
         elements_to_draw,
         theme,
         output_format,
-        font_name,
     )
     return ax

@@ -2,9 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from typing import Union, List
-import streamlit as st
 from scipy import interpolate
-from datetime import datetime, timezone
 
 
 def load_yahoo_data(tickers: Union[str, List[str]]) -> pd.DataFrame:

@@ -1,10 +1,11 @@
 import streamlit as st
+import random
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from src.ui import spacing, header, footer
 from src.data import load_yahoo_data, convert_base, interpolate_data
-from src.animation import update, make_animation
+from src.animation import make_animation
 from src.tickers import company_tickers
 from src.theme import light_theme, dark_theme
 
@@ -29,8 +30,6 @@ tickers = st.multiselect(
     key="ticker selection",
 )
 if len(tickers) > 0:
-    # if len(tickers) > 1:
-    #     tickers = tickers[0]
 
     spacing(4)
 
@@ -41,11 +40,10 @@ if len(tickers) > 0:
         st.markdown("##### Animation parameters")
         # choose DPI
         dpi = st.slider(
-            "Select the resolution (the higher the resolution, the better the video, but the longer it takes to create)",
+            "Select the resolution",
             min_value=30,
             max_value=500,
-            value=100,
-            help="A higher resolution leads to more time to create the animation.",
+            value=300,
         )
         # choose FPS
         fps = st.slider(
@@ -84,7 +82,6 @@ if len(tickers) > 0:
                 figsize = (7.2, 7.2)
             else:
                 st.stop("some bug in the matrix")
-        font_name = st.selectbox("Font", options=["AbhayaLibre", "Sarabun", "Caladea"])
 
         spacing(4)
         st.markdown("##### Chart parameters")
@@ -93,11 +90,9 @@ if len(tickers) > 0:
             options=["line", "final point", "area"],
             default=["line", "final point", "area"],
         )
-        title = st.text_input("Title", value=f"A financial history")
-        description = st.text_area(
-            "Description",
-            value="The description is supposed to be a large text that will appears throughout the video. Hope it renders well.",
-        )
+        if "line" not in elements_to_draw:
+            st.warning("It's probably a bad idea to remove the lines from your chart.")
+        title = st.text_input("Title", value="A financial history")
 
         spacing(4)
         st.markdown("##### Data parameters")
@@ -146,9 +141,7 @@ if len(tickers) > 0:
 
     st.markdown("### Start the program")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        create_anim = st.toggle("Create animation")
+    create_anim = st.toggle("Create animation")
     if create_anim:
 
         if end_date < start_date:
@@ -159,6 +152,19 @@ if len(tickers) > 0:
         # initialize the progress bar
         progress_text = "Creating the animation"
         my_bar = st.progress(0, text=progress_text)
+
+        # some cool message
+        message = random.choice(
+            [
+                "How about making some coffee while the program runs?",
+                "Have you drunk enough water today? Take this time to have a glass.",
+                "Damn, I forgot how boring waiting can be sometimes.",
+                "Stretch your legs a bit. It's good for your health.",
+                "Maybe a quick walk? Refresh your mind.",
+                "Perfect time for a short break. You deserve it.",
+            ]
+        )
+        st.write(message)
 
         # initiate figure
         fig, axs = plt.subplots(figsize=figsize, dpi=dpi)
@@ -173,11 +179,9 @@ if len(tickers) > 0:
             tickers,
             my_bar,
             title,
-            description,
             elements_to_draw,
             theme,
             output_format,
-            font_name,
         )
 
         path = f"video/{tickers}.mp4"
