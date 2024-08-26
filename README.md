@@ -1,9 +1,11 @@
 # Stock motion
 
-A video generator, data-based, that uses historical financial data to create smooth, customizable
+A video generator, data-based, that uses historical financial data to create smooth, customizable animations.
 
-![evolution of various stocks](preview.mp4)
+Check out the [app](https://video-finance.streamlit.app/).
 
 <br><br>
 
 # Contribute
+
+TODO
