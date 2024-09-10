@@ -66,7 +66,6 @@ def interpolate_data(
 
     interpolated_df = pd.DataFrame({"Index": new_x})
 
-    # Convert dates to numbers, interpolate, then convert back to dates
     date_nums = pd.to_numeric(df["Date"])
     f_date = interpolate.interp1d(x, date_nums, kind="linear")
     interpolated_df["Date"] = pd.to_datetime(f_date(new_x).astype(int))

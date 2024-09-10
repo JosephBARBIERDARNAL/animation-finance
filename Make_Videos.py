@@ -21,8 +21,6 @@ st.html(
     """
 )
 
-
-# select ticker
 tickers = st.multiselect(
     "Select the ticker's company",
     options=company_tickers.keys(),
@@ -38,14 +36,12 @@ if len(tickers) > 0:
         spacing(4)
 
         st.markdown("##### Animation parameters")
-        # choose DPI
         dpi = st.slider(
             "Select the resolution",
             min_value=30,
             max_value=500,
             value=300,
         )
-        # choose FPS
         fps = st.slider(
             "Select FPS (frames per second, the higher the value, the faster the video)",
             min_value=1,
@@ -66,9 +62,9 @@ if len(tickers) > 0:
 
         with col2:
             options_format_video = [
+                "Square",
                 "Landscape",
                 "Portrait",
-                "Square",
             ]
             output_format = st.selectbox(
                 "Output format",
@@ -88,7 +84,7 @@ if len(tickers) > 0:
         elements_to_draw = st.multiselect(
             "Choose elements to put on the chart",
             options=["line", "final point", "area"],
-            default=["line", "final point", "area"],
+            default=["line", "final point"],
         )
         if "line" not in elements_to_draw:
             st.warning("It's probably a bad idea to remove the lines from your chart.")
@@ -96,13 +92,13 @@ if len(tickers) > 0:
 
         spacing(4)
         st.markdown("##### Data parameters")
-        base = st.toggle("Use base 100 format (recommended)", value=True)
 
         df = load_yahoo_data(tickers)
         n_wanted = st.slider(
             "Number of points", min_value=10, max_value=len(df), value=30
         )
         df = df.tail(n_wanted).reset_index()
+        base = True  # st.toggle("Use base 100 format (recommended)", value=True)
         if base:
             for ticker in tickers:
                 df[ticker] = convert_base(df[ticker])
@@ -142,6 +138,7 @@ if len(tickers) > 0:
     st.markdown("### Start the program")
 
     create_anim = st.toggle("Create animation")
+
     if create_anim:
 
         if end_date < start_date:
@@ -149,11 +146,9 @@ if len(tickers) > 0:
                 "Unexpected input: start date ({start_date}) is after end date ({end_date})"
             )
 
-        # initialize the progress bar
         progress_text = "Creating the animation"
         my_bar = st.progress(0, text=progress_text)
 
-        # some cool message
         message = random.choice(
             [
                 "How about making some coffee while the program runs?",
@@ -166,12 +161,10 @@ if len(tickers) > 0:
         )
         st.write(message)
 
-        # initiate figure
         fig, axs = plt.subplots(figsize=figsize, dpi=dpi)
         fig.set_facecolor(theme["background-color"])
         axs.spines[["top", "right", "bottom"]].set_visible(False)
 
-        # additional arguments for the update() function
         fargs = (
             df,
             axs,
@@ -188,10 +181,8 @@ if len(tickers) > 0:
         ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
         ani.save(path, fps=fps)
 
-        # display animation
         st.video(path, loop=True, autoplay=True, muted=True)
 
-        # save button
         with open(path, "rb") as file:
             btn = st.download_button(
                 label="Download video",
