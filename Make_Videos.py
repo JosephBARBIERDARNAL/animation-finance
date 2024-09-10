@@ -48,7 +48,7 @@ def create_animation(
         os.makedirs("video")
 
     ani = FuncAnimation(fig, func=make_animation, frames=len(df), fargs=fargs)
-    ani.save(path, fps=fps)
+    ani.save(path, fps=fps, writer="ffmpeg")
     plt.close(fig)
     return path
 
