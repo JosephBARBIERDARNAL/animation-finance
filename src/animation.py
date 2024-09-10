@@ -53,13 +53,11 @@ def update(
         progress_text = "Done"
     my_bar.progress(current_progress_value, text=progress_text)
 
-    # initialize subset of data
     subset_df = df.iloc[:frame]
     ax.clear()
 
     for i, ticker in enumerate(tickers):
 
-        # create the chart
         if "line" in elements_to_draw:
             ax.plot(
                 subset_df["Index"],
@@ -83,9 +81,12 @@ def update(
                 alpha=0.3,
             )
 
-        # annotate the last point
+        # Calculate the x-offset based on the current x-axis range
+        x_range = ax.get_xlim()[1] - ax.get_xlim()[0]
+        x_offset = x_range * 0.03
+
         ax_text(
-            subset_df["Index"].values[-1] + 1,
+            subset_df["Index"].values[-1] + x_offset,
             subset_df[ticker].values[-1],
             f"{company_tickers[ticker]} (${subset_df[ticker].values[-1]:,.0f})",
             color=linecolors[i],
